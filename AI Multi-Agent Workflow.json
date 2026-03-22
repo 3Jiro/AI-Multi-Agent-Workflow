@@ -1,0 +1,300 @@
+{
+  "name": "AI Multi-Agent Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        96
+      ],
+      "id": "54a1c60e-ede0-45ee-9511-3858900a872d",
+      "name": "When chat message received",
+      "webhookId": "bdc752db-3c35-421b-b899-44a3cca52fec"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7c991658-5c76-4969-b132-3cbd5414ec82",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "APPROVED",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "a4b4b7f2-3592-4d00-8868-2ee24434bf64",
+              "leftValue": "={{ $json.count || 0 }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "ignoreCase": false
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        16
+      ],
+      "id": "d3bd85e1-ce35-4dd6-8e0c-ad8932aa4c0a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Ak2EHYRKojiPkN56",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Ak2EHYRKojiPkN56",
+          "cachedResultName": "sub planner agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        96
+      ],
+      "id": "292b7176-9541-46d9-9625-e889c5dbf862",
+      "name": "planner"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Ht6rHZZgh0jc5KsV",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Ht6rHZZgh0jc5KsV",
+          "cachedResultName": "sub executor agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        96
+      ],
+      "id": "9b00f498-690e-408b-bb56-e0730f50b661",
+      "name": "executor"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "iOc6NNm98R9jGbRs",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/iOc6NNm98R9jGbRs",
+          "cachedResultName": "sub reviewer agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        16
+      ],
+      "id": "68d2e111-d0d2-4083-8978-5e826dd5c451",
+      "name": "reviewer"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Grab the current item data\nconst item = $json;\n\n// 2. Try to find the post text. \n// It looks in the current node first, then falls back to the 'executor' node.\nconst postContent = item.output || $('executor').item.json.output;\n\n// 3. Check if we actually found something\nif (!postContent) {\n  return { \n    status: \"Error\",\n    message: \"Post content not found in current or executor node.\" \n  };\n}\n\n// 4. Return the cleaned-up data\nreturn {\n  final_post: postContent,\n  platform: \"LinkedIn\",\n  word_count: postContent.split(/\\s+/).length,\n  ready_to_publish: true\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -32
+      ],
+      "id": "f84f0c09-9d3c-48d8-b6d0-af5c714de66e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the count from the incoming data, or start at 0\nlet previousCount = $json.count || 0;\n\nreturn {\n  ...$json, // This carries over the post, tone, hook, etc.\n  count: previousCount + 1\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "68a9b208-f403-49d6-a2af-13731ee810ce",
+      "name": "counter"
+    }
+  ],
+  "pinData": {
+    "planner": [
+      {
+        "json": {
+          "tone": "*   **Challenging & Blunt:** Directly confronts a widely accepted norm.\n*   **Analytical & Evidence-based:** Backs claims with logical reasoning, not just opinion.\n*   **Thought-Provoking:** Aims to spark discussion and critical self-reflection.\n*   **Pragmatic:** Offers a clear perspective on actual outcomes.",
+          "hook": "Forget what you think you know about 'hustle' in remote software engineering. It's not a badge of honor; it's a productivity black hole, especially when you're working from home. And here's why the metrics agree.",
+          "outline": "*   **Hook:** \"Forget what you think you know about 'hustle' in remote software engineering. It's not a badge of honor; it's a productivity black hole, especially when you're working from home. And here's why the metrics agree.\"\n\n*   **4-Point Outline:**\n    1.  **The Illusion of More Hours:** Argue that beyond a certain point, extra hours for complex, creative problem-solving (like coding) lead to diminishing returns, not increased output. Instead, they lead to more context switching, less deep focus, and rushed, suboptimal solutions.\n    2.  **The Remote Multiplier Effect:** Explain how working from home blurs boundaries, making \"always-on\" culture insidious. The lack of a physical commute or office exit signals means engineers struggle to truly disconnect, leading to chronic low-level stress and cognitive fatigue that an office environment *might* have mitigated.\n    3.  **The Cost: Technical Debt & Burnout, Not Innovation:** Detail the tangible downsides. Overworked engineers push out more bugs, create more technical debt, and lack the mental space for true innovation or robust architectural thinking. Their output might *look* higher, but its quality and long-term viability plummet.\n    4.  **The Productive Alternative: Intentionality & Recovery:** Propose that true productivity for remote engineers comes from focused work blocks, clear boundaries, and generous, guilt-free recovery time. Emphasize that rest isn't a luxury; it's a critical component for maintaining cognitive performance and fostering creativity.",
+          "forbidden": "1.  **Unleash**\n2.  **Seamless**\n3.  **Paradigm Shift**\n\n---"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "executor": [
+      {
+        "json": {
+          "output": "Forget what you think you know about 'hustle' in remote software engineering. It's not a badge of honor; it's a productivity black hole, especially when you're working from home. And here's why the metrics agree.\n\n**The Illusion of More Hours**\nThe belief that more hours equate to more output for software engineers is fundamentally flawed. Beyond a certain threshold – often far lower than many realize – extra time dedicated to complex, creative problem-solving like coding yields rapidly diminishing returns. Instead of producing more high-quality code, prolonged sessions lead to increased context switching, superficial focus, and a cascade of rushed, suboptimal solutions. Your brain isn't a machine that scales linearly with input; it's a finely tuned instrument that requires specific conditions for deep work. Overextend it, and you don't get more, you get less that's valuable, buried under the weight of cognitive fatigue.\n\n**The Remote Multiplier Effect**\nWorking from home, while offering flexibility, also acts as a multiplier for the insidious \"always-on\" culture. The physical boundaries that once delineated work from personal life vanish. There's no commute to mentally decompress, no office building to physically exit, no clear signals to disconnect. This absence of clear demarcation means remote engineers often struggle to truly switch off, leading to a state of chronic low-level stress and pervasive cognitive fatigue. An office environment, for all its flaws, often provided these crucial, if subtle, psychological breaks that remote work actively erodes.\n\n**The Cost: Technical Debt & Burnout, Not Innovation**\nThe tangible downsides of this relentless \"hustle\" are stark. Overworked engineers, operating under mental duress, inevitably push out more bugs. They take shortcuts, contributing significantly to technical debt that cripples future development and maintenance. The mental bandwidth required for true innovation, thoughtful system design, or robust architectural thinking evaporates. While their immediate commit count or reported hours might appear higher, the quality, long-term viability, and inherent stability of their output plummet. This isn't productivity; it's a slow, self-inflicted wound on the codebase and the team's future capacity.\n\n**The Productive Alternative: Intentionality & Recovery**\nTrue, sustainable productivity for remote engineers isn't about grinding more hours; it's about intentionality and recovery. It demands structuring your day around focused work blocks, meticulously safeguarding your deep work periods. Crucially, it requires establishing and rigorously enforcing clear boundaries between work and life. Generous, guilt-free recovery time isn't a luxury item to be squeezed in if time permits; it's a non-negotiable component of maintaining peak cognitive performance and fostering genuine creativity. Only through dedicated rest and strategic disconnection can engineers maintain the mental clarity, resilience, and innovative capacity required for excellence.",
+          "tone": "*   **Challenging & Blunt:** Directly confronts a widely accepted norm.\n*   **Analytical & Evidence-based:** Backs claims with logical reasoning, not just opinion.\n*   **Thought-Provoking:** Aims to spark discussion and critical self-reflection.\n*   **Pragmatic:** Offers a clear perspective on actual outcomes.",
+          "forbidden": "1.  **Unleash**\n2.  **Seamless**\n3.  **Paradigm Shift**\n\n---",
+          "outline": "*   **Hook:** \"Forget what you think you know about 'hustle' in remote software engineering. It's not a badge of honor; it's a productivity black hole, especially when you're working from home. And here's why the metrics agree.\"\n\n*   **4-Point Outline:**\n    1.  **The Illusion of More Hours:** Argue that beyond a certain point, extra hours for complex, creative problem-solving (like coding) lead to diminishing returns, not increased output. Instead, they lead to more context switching, less deep focus, and rushed, suboptimal solutions.\n    2.  **The Remote Multiplier Effect:** Explain how working from home blurs boundaries, making \"always-on\" culture insidious. The lack of a physical commute or office exit signals means engineers struggle to truly disconnect, leading to chronic low-level stress and cognitive fatigue that an office environment *might* have mitigated.\n    3.  **The Cost: Technical Debt & Burnout, Not Innovation:** Detail the tangible downsides. Overworked engineers push out more bugs, create more technical debt, and lack the mental space for true innovation or robust architectural thinking. Their output might *look* higher, but its quality and long-term viability plummet.\n    4.  **The Productive Alternative: Intentionality & Recovery:** Propose that true productivity for remote engineers comes from focused work blocks, clear boundaries, and generous, guilt-free recovery time. Emphasize that rest isn't a luxury; it's a critical component for maintaining cognitive performance and fostering creativity."
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "reviewer": [
+      {
+        "json": {
+          "status": "APPROVED",
+          "feedback": "None"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "planner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "planner": {
+      "main": [
+        [
+          {
+            "node": "executor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "executor": {
+      "main": [
+        [
+          {
+            "node": "reviewer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "reviewer": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "counter": {
+      "main": [
+        [
+          {
+            "node": "executor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ccce63ca-205d-459f-af24-073b48508b8b",
+  "meta": {
+    "instanceId": "54b06315817fd07df4927ca7349fea37606eb75294a247e231fd9d13aa12f311"
+  },
+  "id": "SjlwIMCBsRxtmEd9",
+  "tags": []
+}
